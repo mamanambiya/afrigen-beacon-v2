@@ -296,8 +296,7 @@ curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&
 
 ```json
 {"error": {"errorCode": 400,
-  "errorMessage": "Unknown assembly: GRCh99. Recognised builds: GRCh37,
-   GRCh38. This beacon may not hold data for all of them."}}
+  "errorMessage": "Unknown assembly: GRCh99. Recognised builds: GRCh37, GRCh38. This beacon may not hold data for all of them."}}
 ```
 
 ### Why this step exists
@@ -331,8 +330,10 @@ Note what the 400 does **not** say. It lists the builds this beacon
 An earlier wording said "this beacon answers for GRCh37, GRCh38" — which sent a
 caller who mistyped an assembly straight into the 501 above, because GRCh37 is
 recognised and unheld. `assembly.py` has no access to the dataset catalogue, so
-rather than claim coverage it cannot verify, it stops claiming. The assembly dropdown now offers only GRCh38, so a UI user cannot
-reach this — it is for API callers.
+rather than claim coverage it cannot verify, it stops claiming.
+
+The assembly dropdown now offers only GRCh38, so a UI user cannot reach this —
+it is for API callers.
 
 That is the failure mode this project guards hardest against, and the rule it
 produced is the one to carry into your own changes: **when the beacon cannot
