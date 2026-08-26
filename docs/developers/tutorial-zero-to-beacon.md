@@ -174,11 +174,15 @@ apart from a broken one later.
 curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=1000000'
 ```
 
-```json
+```text
 {"meta": {...},
  "responseSummary": {"exists": false, "numTotalResults": 0},
  "response": {"resultSets": [], "beaconHandovers": [...]}}
 ```
+
+(Abbreviated — `{...}` marks elided fields, so that block is illustrative
+rather than literal output. Every block fenced as `json` in this file is real
+and parses.)
 
 **Read that response shape carefully.** The answer is at
 `responseSummary.exists`. There is no top-level `exists` field, and several
@@ -317,9 +321,7 @@ curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&
 
 ```json
 {"error": {"errorCode": 501,
-  "errorMessage": "This beacon holds no data for assembly GRCh37, so it cannot
-   answer for that build. This is not a statement about whether the variant
-   exists. Data held: GRCh38."}}
+  "errorMessage": "This beacon holds no data for assembly GRCh37, so it cannot answer for that build. This is not a statement about whether the variant exists. Data held: GRCh38."}}
 ```
 
 A 501 is a signal a client can act on; `exists: false` is an answer it will

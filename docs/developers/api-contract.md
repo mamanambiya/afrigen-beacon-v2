@@ -6,7 +6,7 @@ What the beacon actually returns, and the trap in it.
 
 Every data endpoint returns the GA4GH Beacon v2 envelope — three top-level keys:
 
-```json
+```text
 {
   "meta":            { "beaconId": "org.afrigen-d.beacon", "apiVersion": "v2.0.0", ... },
   "responseSummary": { "exists": false, "numTotalResults": 0 },
@@ -59,7 +59,7 @@ matching *datasets* rather than matching variants. **Never infer absence from
 The spec places `beaconHandovers` at the top level of the response. This beacon
 returns it inside `response`:
 
-```json
+```text
 "response": { "resultSets": [], "beaconHandovers": [ {"id": "CUSTOM:FEDERATED_IMPUTATION", ...} ] }
 ```
 

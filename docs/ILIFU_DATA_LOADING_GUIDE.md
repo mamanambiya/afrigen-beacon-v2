@@ -161,7 +161,7 @@ python vcf_transform/vcf_to_beacon.py /path/to/h3africa.vcf.gz \
 
 **Understanding the output:**
 
-```json
+```text
 // variants_batch.jsonl (one line per variant)
 {"id": "1:100001:A:T", "assembly_id": "GRCh38", "reference_name": "1",
  "start": 100000, "end": 100001, "reference_bases": "A",
