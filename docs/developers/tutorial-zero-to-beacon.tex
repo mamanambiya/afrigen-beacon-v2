@@ -41,50 +41,16 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{color}
-\usepackage{fancyvrb}
-\newcommand{\VerbBar}{|}
-\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-% Add ',fontsize=\small' for more characters per line
-\newenvironment{Shaded}{}{}
-\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
-\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
-\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
-\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{#1}}
-\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
-\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
-\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
-\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
-\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
-\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
-\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
-\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
-\newcommand{\ExtensionTok}[1]{#1}
-\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
-\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{\textbf{#1}}}
-\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
-\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
-\newcommand{\NormalTok}[1]{#1}
-\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
-\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
-\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
-\newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
-\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
-\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
-\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
-\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
-\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \usepackage{fvextra}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
-\DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,breakanywhere}
+\usepackage{xcolor}
+\usepackage[htt]{hyphenat}
+\usepackage[framemethod=TikZ]{mdframed}
+\definecolor{codebg}{RGB}{246,246,246}
+\DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,breakanywhere,fontsize=\small}
+\surroundwithmdframed[backgroundcolor=codebg,linewidth=0pt,innertopmargin=5pt,innerbottommargin=5pt,innerleftmargin=5pt,innerrightmargin=5pt,skipabove=6pt,skipbelow=6pt]{verbatim}
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
@@ -108,9 +74,6 @@
 \setcounter{tocdepth}{3}
 \tableofcontents
 }
-\section{Tutorial: from zero to a running
-beacon}\label{tutorial-from-zero-to-a-running-beacon}
-
 Start with nothing. Finish with a GA4GH Beacon v2 service running on
 your machine, holding data, answering genomic queries correctly.
 
@@ -129,7 +92,7 @@ production deploy. It is not merged yet, so read it from the pull
 request.
 \end{quote}
 
-\subsection{What you will have at the
+\section{What you will have at the
 end}\label{what-you-will-have-at-the-end}
 
 \begin{itemize}
@@ -145,16 +108,14 @@ end}\label{what-you-will-have-at-the-end}
   Enough understanding of the query path to change it safely
 \end{itemize}
 
-\subsection{Before you start}\label{before-you-start}
+\section{Before you start}\label{before-you-start}
 
 You need \textbf{Docker} with Compose v2, and about 2 GB of free disk.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker} \AttributeTok{{-}{-}version}
-\ExtensionTok{docker}\NormalTok{ info }\OperatorTok{\textgreater{}}\NormalTok{/dev/null }\KeywordTok{\&\&} \BuiltInTok{echo} \StringTok{"daemon is running"}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker --version
+docker info >/dev/null && echo "daemon is running"
+\end{verbatim}
 
 Verified against Docker 29.2.1. You do \textbf{not} need Python, MongoDB
 or Node installed locally --- everything runs in containers. You will
@@ -162,14 +123,12 @@ want Python later to run the test suites, but not for this tutorial.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\subsection{Step 1 --- Get the code}\label{step-1-get-the-code}
+\section{Step 1 --- Get the code}\label{step-1-get-the-code}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{git}\NormalTok{ clone git@github.com:AfriGen{-}D/variant{-}checker{-}beacon.git}
-\BuiltInTok{cd}\NormalTok{ afrigen{-}beacon{-}v2}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+git clone git@github.com:AfriGen-D/variant-checker-beacon.git
+cd afrigen-beacon-v2
+\end{verbatim}
 
 \textbf{Clone somewhere Docker Desktop can share} --- under your home
 directory is safe. On macOS, \texttt{/tmp} is \emph{not} in Docker
@@ -179,26 +138,22 @@ produces a container that cannot write its log file and an API that
 never starts, with an error that points nowhere near the cause. This
 cost an hour to diagnose while writing this page.
 
-\subsection{Step 2 --- Check the environment file
+\section{Step 2 --- Check the environment file
 exists}\label{step-2-check-the-environment-file-exists}
 
 The dev stack reads \texttt{.env.boolean} from the repository root.
 \textbf{It is gitignored (\texttt{.gitignore:62}), so a fresh clone does
 not have it} and \texttt{docker\ compose} will refuse to start:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{env file /path/to/repo/.env.boolean not found}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+env file /path/to/repo/.env.boolean not found
+\end{verbatim}
 
 Create it from the example:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{cp}\NormalTok{ .env.example .env.boolean}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+cp .env.example .env.boolean
+\end{verbatim}
 
 \textbf{Then make one edit, or nothing will work.} \texttt{.env.example}
 is a \emph{production} template: it sets
@@ -207,12 +162,10 @@ every request to \texttt{https://localhost:8000} --- where nothing is
 listening. You get a stack that looks healthy in \texttt{docker\ ps} and
 answers nothing.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{sed} \AttributeTok{{-}i} \StringTok{\textquotesingle{}\textquotesingle{}} \StringTok{\textquotesingle{}s/\^{}SECURE\_SSL\_REDIRECT=True/SECURE\_SSL\_REDIRECT=False/\textquotesingle{}}\NormalTok{ .env.boolean   }\CommentTok{\# macOS}
-\CommentTok{\# GNU/Linux: sed {-}i \textquotesingle{}s/\^{}SECURE\_SSL\_REDIRECT=True/SECURE\_SSL\_REDIRECT=False/\textquotesingle{} .env.boolean}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
+# GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+\end{verbatim}
 
 \texttt{DJANGO\_SECRET\_KEY} ships as \texttt{CHANGE\_ME}, which is fine
 locally. Never reuse it anywhere real.
@@ -224,13 +177,11 @@ If you change \texttt{.env.boolean} later,
 \texttt{docker\ compose\ -f\ compose/docker-compose.dev.yml\ up\ -d\ -\/-force-recreate\ beacon-api}.
 \end{quote}
 
-\subsection{Step 3 --- Start the stack}\label{step-3-start-the-stack}
+\section{Step 3 --- Start the stack}\label{step-3-start-the-stack}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ compose }\AttributeTok{{-}f}\NormalTok{ compose/docker{-}compose.dev.yml up }\AttributeTok{{-}d} \AttributeTok{{-}{-}build}\NormalTok{ mongodb redis beacon{-}api}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml up -d --build mongodb redis beacon-api
+\end{verbatim}
 
 The first run builds the API image and takes a few minutes. Compose
 starts MongoDB and Redis first and \textbf{waits for both to report
@@ -239,44 +190,36 @@ errors during startup.
 
 Expected tail:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{ Container beacon{-}dev{-}mongodb  Healthy}
-\NormalTok{ Container beacon{-}dev{-}redis    Healthy}
-\NormalTok{ Container beacon{-}api{-}boolean  Started}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+ Container beacon-dev-mongodb  Healthy
+ Container beacon-dev-redis    Healthy
+ Container beacon-api-boolean  Started
+\end{verbatim}
 
 Confirm all three are up:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ compose }\AttributeTok{{-}f}\NormalTok{ compose/docker{-}compose.dev.yml ps}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml ps
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{NAME                 IMAGE                STATUS                    PORTS}
-\NormalTok{beacon{-}api{-}boolean   compose{-}beacon{-}api   Up (health: starting)     127.0.0.1:8000{-}\textgreater{}8000/tcp}
-\NormalTok{beacon{-}dev{-}mongodb   mongo:5.0            Up (healthy)              127.0.0.1:27017{-}\textgreater{}27017/tcp}
-\NormalTok{beacon{-}dev{-}redis     redis:6{-}alpine       Up (healthy)              127.0.0.1:6380{-}\textgreater{}6379/tcp}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+NAME                 IMAGE                STATUS                    PORTS
+beacon-api-boolean   compose-beacon-api   Up (health: starting)     127.0.0.1:8000->8000/tcp
+beacon-dev-mongodb   mongo:5.0            Up (healthy)              127.0.0.1:27017->27017/tcp
+beacon-dev-redis     redis:6-alpine       Up (healthy)              127.0.0.1:6380->6379/tcp
+\end{verbatim}
 
 Note the ports bind to \texttt{127.0.0.1}, not \texttt{0.0.0.0} --- the
 stack is not reachable from your network. Redis is on \textbf{6380}
 locally to avoid colliding with any Redis you already run.
 
-\subsubsection{If Step 3 fails with ``address pools have been fully
+\subsection{If Step 3 fails with ``address pools have been fully
 subnetted''}\label{if-step-3-fails-with-address-pools-have-been-fully-subnetted}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{failed to create network walk\_beacon{-}dev{-}network: Error response from daemon:}
-\NormalTok{all predefined address pools have been fully subnetted}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+failed to create network walk_beacon-dev-network: Error response from daemon:
+all predefined address pools have been fully subnetted
+\end{verbatim}
 
 Docker has run out of private subnets, not disk or memory. Each compose
 project claims one and they are not released until the network is
@@ -285,35 +228,29 @@ you hit any resource limit.
 
 Find an idle network belonging to something you own and remove it:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ network ls}
-\ExtensionTok{docker}\NormalTok{ network inspect }\OperatorTok{\textless{}}\NormalTok{name}\OperatorTok{\textgreater{}}\NormalTok{ {-}{-}format }\StringTok{\textquotesingle{}\{\{.Name\}\}: \{\{len .Containers\}\} attached\textquotesingle{}}
-\ExtensionTok{docker}\NormalTok{ network rm }\OperatorTok{\textless{}}\NormalTok{name}\OperatorTok{\textgreater{}}          \CommentTok{\# only if 0 attached, and only if it is yours}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker network ls
+docker network inspect <name> --format '{{.Name}}: {{len .Containers}} attached'
+docker network rm <name>          # only if 0 attached, and only if it is yours
+\end{verbatim}
 
 Do \textbf{not} reach for \texttt{docker\ network\ prune}. It removes
 every unused network on the machine, including ones other people's
 stopped stacks will want back.
 
-\subsection{Step 4 --- Confirm the API is
+\section{Step 4 --- Confirm the API is
 alive}\label{step-4-confirm-the-api-is-alive}
 
 Give it about ten seconds after the container starts, then:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s}\NormalTok{ http://localhost:8000/api/health}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s http://localhost:8000/api/health
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{\{}\DataTypeTok{"status"}\FunctionTok{:}\StringTok{"healthy"}\FunctionTok{,}\DataTypeTok{"version"}\FunctionTok{:}\StringTok{"2.0.0{-}boolean"}\FunctionTok{,}
- \DataTypeTok{"services"}\FunctionTok{:\{}\DataTypeTok{"database"}\FunctionTok{:}\StringTok{"healthy"}\FunctionTok{,}\DataTypeTok{"cache"}\FunctionTok{:}\StringTok{"healthy"}\FunctionTok{\}\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{"status":"healthy","version":"2.0.0-boolean",
+ "services":{"database":"healthy","cache":"healthy"}}
+\end{verbatim}
 
 Both \texttt{database} and \texttt{cache} must say \texttt{healthy}. If
 either does not, the API started before its dependencies were ready ---
@@ -326,26 +263,26 @@ That distinction has caused real incidents on this project;
 \texttt{docs/DEPLOYMENT\_PREREQUISITES.md} explains why at length.
 \end{quote}
 
-\subsection{Step 5 --- Query the empty
+\section{Step 5 --- Query the empty
 beacon}\label{step-5-query-the-empty-beacon}
 
 Before loading anything, ask it something. This matters: you want to see
 what ``no'' looks like from a beacon that genuinely holds nothing, so
 you can tell it apart from a broken one later.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{\textquotesingle{}http://localhost:8000/api/g\_variants?assemblyId=GRCh38\&referenceName=1\&start=1000000\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=1000000'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{\{}\DataTypeTok{"meta"}\FunctionTok{:} \FunctionTok{\{}\ErrorTok{...}\FunctionTok{\},}
- \DataTypeTok{"responseSummary"}\FunctionTok{:} \FunctionTok{\{}\DataTypeTok{"exists"}\FunctionTok{:} \KeywordTok{false}\FunctionTok{,} \DataTypeTok{"numTotalResults"}\FunctionTok{:} \DecValTok{0}\FunctionTok{\},}
- \DataTypeTok{"response"}\FunctionTok{:} \FunctionTok{\{}\DataTypeTok{"resultSets"}\FunctionTok{:} \OtherTok{[]}\FunctionTok{,} \DataTypeTok{"beaconHandovers"}\FunctionTok{:} \OtherTok{[}\ErrorTok{...}\OtherTok{]}\FunctionTok{\}\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{"meta": {...},
+ "responseSummary": {"exists": false, "numTotalResults": 0},
+ "response": {"resultSets": [], "beaconHandovers": [...]}}
+\end{verbatim}
+
+(Abbreviated --- \texttt{\{...\}} marks elided fields, so that block is
+illustrative rather than literal output. Every block fenced as
+\texttt{json} in this file is real and parses.)
 
 \textbf{Read that response shape carefully.} The answer is at
 \texttt{responseSummary.exists}. There is no top-level \texttt{exists}
@@ -353,41 +290,32 @@ field, and several older documents in this repository show client
 examples that parse one. Those examples silently report ``not found''
 for everything. See \url{api-contract.md}.
 
-\subsection{Step 6 --- Load the test
-data}\label{step-6-load-the-test-data}
+\section{Step 6 --- Load the test data}\label{step-6-load-the-test-data}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ compose }\AttributeTok{{-}f}\NormalTok{ compose/docker{-}compose.dev.yml exec }\AttributeTok{{-}T}\NormalTok{ beacon{-}api }\DataTypeTok{\textbackslash{}}
-\NormalTok{  python manage.py load\_boolean\_test\_data }\AttributeTok{{-}{-}settings}\OperatorTok{=}\NormalTok{beacon\_project.settings\_boolean}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T beacon-api \
+  python manage.py load_boolean_test_data --settings=beacon_project.settings_boolean
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{  {-} Individuals: 50}
+\begin{verbatim}
+  - Individuals: 50
 
-\NormalTok{You can now test Boolean queries!}
-\end{Highlighting}
-\end{Shaded}
+You can now test Boolean queries!
+\end{verbatim}
 
 Check what landed:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ compose }\AttributeTok{{-}f}\NormalTok{ compose/docker{-}compose.dev.yml exec }\AttributeTok{{-}T}\NormalTok{ mongodb }\DataTypeTok{\textbackslash{}}
-\NormalTok{  mongo beacon\_db }\AttributeTok{{-}{-}quiet} \AttributeTok{{-}{-}eval} \StringTok{\textquotesingle{}db.getCollectionNames().forEach(function(c)\{ print("  "+c+": "+db[c].count()) \})\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb \
+  mongo beacon_db --quiet --eval 'db.getCollectionNames().forEach(function(c){ print("  "+c+": "+db[c].count()) })'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{  datasets: 1}
-\NormalTok{  individuals: 50}
-\NormalTok{  query\_logs: 62}
-\NormalTok{  variants: 100}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+  datasets: 1
+  individuals: 50
+  query_logs: 62
+  variants: 100
+\end{verbatim}
 
 The \texttt{mongo:5.0} image ships the \textbf{legacy \texttt{mongo}
 shell}. \texttt{mongosh} does not exist in it and any command using
@@ -398,24 +326,20 @@ wrong.
 Client IPs in it are truncated to a /24 before being written, and rows
 expire on a TTL index. See \texttt{beacon\_api/privacy.py}.
 
-\subsection{Step 7 --- Find a variant that actually
+\section{Step 7 --- Find a variant that actually
 exists}\label{step-7-find-a-variant-that-actually-exists}
 
 Do not guess coordinates. Ask the database what it holds:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ compose }\AttributeTok{{-}f}\NormalTok{ compose/docker{-}compose.dev.yml exec }\AttributeTok{{-}T}\NormalTok{ mongodb }\DataTypeTok{\textbackslash{}}
-\NormalTok{  mongo beacon\_db }\AttributeTok{{-}{-}quiet} \AttributeTok{{-}{-}eval} \StringTok{\textquotesingle{}var v=db.variants.findOne();}
-\StringTok{  print("assembly="+v.assembly\_id+"  chr="+v.reference\_name+"  start="+v.start+"  ref="+v.reference\_bases+"  alt="+v.alternate\_bases)\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb \
+  mongo beacon_db --quiet --eval 'var v=db.variants.findOne();
+  print("assembly="+v.assembly_id+"  chr="+v.reference_name+"  start="+v.start+"  ref="+v.reference_bases+"  alt="+v.alternate_bases)'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{assembly=GRCh38  chr=chr1  start=42497823  ref=A  alt=G}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+assembly=GRCh38  chr=chr1  start=42497823  ref=A  alt=G
+\end{verbatim}
 
 Yours will differ --- use your own values below.
 
@@ -423,86 +347,70 @@ Notice the chromosome is stored as \texttt{chr1}, not \texttt{1}. Which
 form ends up in the database depends on the ingest pipeline that wrote
 it, which is exactly why the query path matches both.
 
-\subsection{Step 8 --- Ask the beacon a real
+\section{Step 8 --- Ask the beacon a real
 question}\label{step-8-ask-the-beacon-a-real-question}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{\textquotesingle{}http://localhost:8000/api/g\_variants?assemblyId=GRCh38\&referenceName=1\&start=42497823\textquotesingle{}} \DataTypeTok{\textbackslash{}}
-  \KeywordTok{|} \ExtensionTok{python3} \AttributeTok{{-}c} \StringTok{\textquotesingle{}import json,sys; print(json.load(sys.stdin)["responseSummary"])\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=42497823' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{\{\textquotesingle{}exists\textquotesingle{}: True, \textquotesingle{}numTotalResults\textquotesingle{}: 1\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{'exists': True, 'numTotalResults': 1}
+\end{verbatim}
 
 \textbf{That is a working beacon.} You asked with a bare \texttt{1} and
 it matched data stored as \texttt{chr1}.
 
 Now confirm it says no when it should:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{\textquotesingle{}http://localhost:8000/api/g\_variants?assemblyId=GRCh38\&referenceName=1\&start=999\textquotesingle{}} \DataTypeTok{\textbackslash{}}
-  \KeywordTok{|} \ExtensionTok{python3} \AttributeTok{{-}c} \StringTok{\textquotesingle{}import json,sys; print(json.load(sys.stdin)["responseSummary"])\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=999' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{\{\textquotesingle{}exists\textquotesingle{}: False, \textquotesingle{}numTotalResults\textquotesingle{}: 0\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{'exists': False, 'numTotalResults': 0}
+\end{verbatim}
 
 A negative control is not optional here. A beacon that answers
 \texttt{true} to everything looks identical to a working one until
 someone checks.
 
-\subsection{Step 9 --- See the vocabulary
+\section{Step 9 --- See the vocabulary
 handling}\label{step-9-see-the-vocabulary-handling}
 
 \texttt{hg38} and \texttt{GRCh38} are the \textbf{same genome build} in
 different vocabularies --- UCSC and GRC. A beacon must answer both
 identically:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ GRCh38 hg38 HG38}\KeywordTok{;} \ControlFlowTok{do}
-  \BuiltInTok{printf} \StringTok{\textquotesingle{}\%{-}8s \textquotesingle{}} \StringTok{"}\VariableTok{$a}\StringTok{"}
-  \ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{"http://localhost:8000/api/g\_variants?assemblyId=}\VariableTok{$a}\StringTok{\&referenceName=1\&start=42497823"} \DataTypeTok{\textbackslash{}}
-    \KeywordTok{|} \ExtensionTok{python3} \AttributeTok{{-}c} \StringTok{\textquotesingle{}import json,sys; print(json.load(sys.stdin)["responseSummary"]["exists"])\textquotesingle{}}
-\ControlFlowTok{done}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+for a in GRCh38 hg38 HG38; do
+  printf '%-8s ' "$a"
+  curl -s "http://localhost:8000/api/g_variants?assemblyId=$a&referenceName=1&start=42497823" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"]["exists"])'
+done
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{GRCh38   True}
-\NormalTok{hg38     True}
-\NormalTok{HG38     True}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+GRCh38   True
+hg38     True
+HG38     True
+\end{verbatim}
 
 And an assembly the beacon cannot answer for is refused rather than
 answered:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{\textquotesingle{}http://localhost:8000/api/g\_variants?assemblyId=GRCh99\&referenceName=1\&start=42497823\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&start=42497823'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{\{}\DataTypeTok{"error"}\FunctionTok{:} \FunctionTok{\{}\DataTypeTok{"errorCode"}\FunctionTok{:} \DecValTok{400}\FunctionTok{,}
-  \DataTypeTok{"errorMessage"}\FunctionTok{:} \StringTok{"Unknown assembly: GRCh99. Recognised builds: GRCh37, GRCh38. This beacon may not hold data for all of them."}\FunctionTok{\}\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{"error": {"errorCode": 400,
+  "errorMessage": "Unknown assembly: GRCh99. Recognised builds: GRCh37, GRCh38. This beacon may not hold data for all of them."}}
+\end{verbatim}
 
-\subsubsection{Why this step exists}\label{why-this-step-exists}
+\subsection{Why this step exists}\label{why-this-step-exists}
 
 Until 2026-08-19 the middle line read \texttt{hg38\ \ \ False}. The
 query path compared the caller's literal spelling against what was
@@ -516,20 +424,14 @@ Both halves of that are now closed. \texttt{hg38} canonicalises to
 \texttt{GRCh38}, and a build this beacon holds no data for is
 \textbf{refused rather than answered}:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{\textquotesingle{}http://localhost:8000/api/g\_variants?assemblyId=GRCh37\&referenceName=1\&start=42497823\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&start=42497823'
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{\{}\DataTypeTok{"error"}\FunctionTok{:} \FunctionTok{\{}\DataTypeTok{"errorCode"}\FunctionTok{:} \DecValTok{501}\FunctionTok{,}
-  \DataTypeTok{"errorMessage"}\FunctionTok{:} \StringTok{"This beacon holds no data for assembly GRCh37, so it cannot}
-\StringTok{   answer for that build. This is not a statement about whether the variant}
-\StringTok{   exists. Data held: GRCh38."}\FunctionTok{\}\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{"error": {"errorCode": 501,
+  "errorMessage": "This beacon holds no data for assembly GRCh37, so it cannot answer for that build. This is not a statement about whether the variant exists. Data held: GRCh38."}}
+\end{verbatim}
 
 A 501 is a signal a client can act on; \texttt{exists:\ false} is an
 answer it will believe.
@@ -553,41 +455,37 @@ never answer a different question and return 200.}
 judgement and its docstring explains the reasoning;
 \texttt{beacon\_api/assembly.py} is the fix that came out of it.
 
-\subsubsection{One more thing to notice}\label{one-more-thing-to-notice}
+\subsection{One more thing to notice}\label{one-more-thing-to-notice}
 
 Look closely at a positive answer:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{\{\textquotesingle{}exists\textquotesingle{}: True, \textquotesingle{}numTotalResults\textquotesingle{}: 0\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+{'exists': True, 'numTotalResults': 0}
+\end{verbatim}
 
 \texttt{exists} is \texttt{True} while \texttt{numTotalResults} is
 \texttt{0}. That is not a typo --- the counter reports matching
 \emph{datasets} under some paths rather than matching variants. Do not
 build a client that infers absence from \texttt{numTotalResults}.
 
-\subsection{Step 9b --- Ask the same question by
+\section{Step 9b --- Ask the same question by
 POST}\label{step-9b-ask-the-same-question-by-post}
 
 Beacon v2's own request format nests the parameters. Every client that
 follows the spec sends this shape, so it is worth seeing it work:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s} \AttributeTok{{-}X}\NormalTok{ POST http://localhost:8000/api/g\_variants }\DataTypeTok{\textbackslash{}}
-  \AttributeTok{{-}H} \StringTok{\textquotesingle{}Content{-}Type: application/json\textquotesingle{}} \DataTypeTok{\textbackslash{}}
-  \AttributeTok{{-}d} \StringTok{\textquotesingle{}\{"query":\{"requestParameters":\{"assemblyId":"GRCh38","referenceName":"1","start":\textless{}POS\textgreater{}\}\}\}\textquotesingle{}} \DataTypeTok{\textbackslash{}}
-  \KeywordTok{|} \ExtensionTok{python3} \AttributeTok{{-}c} \StringTok{\textquotesingle{}import json,sys; print(json.load(sys.stdin)["responseSummary"])\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s -X POST http://localhost:8000/api/g_variants \
+  -H 'Content-Type: application/json' \
+  -d '{"query":{"requestParameters":{"assemblyId":"GRCh38","referenceName":"1","start":<POS>}}}' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+\end{verbatim}
 
 Substitute the \texttt{\textless{}POS\textgreater{}} you found in Step
 7. It must return exactly what the GET in Step 8 returned --- if POST
 and GET ever disagree, one of them is wrong.
 
-\subsubsection{Why this step exists, and what it nearly
+\subsection{Why this step exists, and what it nearly
 shipped}\label{why-this-step-exists-and-what-it-nearly-shipped}
 
 Until 2026-08-20 this returned
@@ -609,46 +507,40 @@ Both halves shipped together. The lesson is worth more than the fix:
 \textbf{a change that unblocks a path is not safe until you check what
 is behind the path.}
 
-\subsection{Step 10 --- Look around the rest of the
+\section{Step 10 --- Look around the rest of the
 API}\label{step-10-look-around-the-rest-of-the-api}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{curl} \AttributeTok{{-}s}\NormalTok{ http://localhost:8000/api/          }\KeywordTok{|} \FunctionTok{head} \AttributeTok{{-}c}\NormalTok{ 200   }\CommentTok{\# beacon info}
-\ExtensionTok{curl} \AttributeTok{{-}s}\NormalTok{ http://localhost:8000/api/datasets                  }\CommentTok{\# what is loaded}
-\ExtensionTok{curl} \AttributeTok{{-}s}\NormalTok{ http://localhost:8000/api/entry\_types               }\CommentTok{\# supported entry types}
-\ExtensionTok{curl} \AttributeTok{{-}s}\NormalTok{ http://localhost:8000/api/map                       }\CommentTok{\# endpoint map}
-\ExtensionTok{curl} \AttributeTok{{-}s} \StringTok{\textquotesingle{}http://localhost:8000/api/individuals?sex=MALE\textquotesingle{}}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+curl -s http://localhost:8000/api/          | head -c 200   # beacon info
+curl -s http://localhost:8000/api/datasets                  # what is loaded
+curl -s http://localhost:8000/api/entry_types               # supported entry types
+curl -s http://localhost:8000/api/map                       # endpoint map
+curl -s 'http://localhost:8000/api/individuals?sex=MALE'
+\end{verbatim}
 
-\subsection{Step 11 --- Run the test
+\section{Step 11 --- Run the test
 suites}\label{step-11-run-the-test-suites}
 
 The query-correctness suites need \textbf{no dependencies at all} --- no
 Django, no database, no network:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{python3} \AttributeTok{{-}m}\NormalTok{ unittest }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_query\_semantics }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_query\_injection }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_pagination\_filters }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_assembly }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_query\_vocabulary }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_capabilities }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_release }\DataTypeTok{\textbackslash{}}
-\NormalTok{  beacon\_api.test\_request\_body}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+python3 -m unittest \
+  beacon_api.test_query_semantics \
+  beacon_api.test_query_injection \
+  beacon_api.test_pagination_filters \
+  beacon_api.test_assembly \
+  beacon_api.test_query_vocabulary \
+  beacon_api.test_capabilities \
+  beacon_api.test_release \
+  beacon_api.test_request_body
+\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{Ran 200 tests in 0.002s}
+\begin{verbatim}
+Ran 200 tests in 0.002s
 
-\NormalTok{OK}
-\end{Highlighting}
-\end{Shaded}
+OK
+\end{verbatim}
 
 That is the merge gate. If you change how a query is interpreted, these
 are the tests that must stay green --- and the ones you extend.
@@ -657,20 +549,18 @@ are the tests that must stay green --- and the ones you extend.
 so it needs a Python between \textbf{3.9 and 3.12}. Django 4.0 cannot
 import on 3.13+, which removed the \texttt{cgi} module it depends on.
 
-\subsection{Step 12 --- Shut down}\label{step-12-shut-down}
+\section{Step 12 --- Shut down}\label{step-12-shut-down}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{docker}\NormalTok{ compose }\AttributeTok{{-}f}\NormalTok{ compose/docker{-}compose.dev.yml down}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml down
+\end{verbatim}
 
 Add \texttt{-v} to delete the MongoDB volume as well and start
 completely fresh next time.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\subsection{Troubleshooting}\label{troubleshooting}
+\section{Troubleshooting}\label{troubleshooting}
 
 \textbf{\texttt{database:\ unhealthy} in the health response.} The API
 started before MongoDB finished initialising.
@@ -724,7 +614,7 @@ pinned to Django 4.0.10 by \texttt{django-mongoengine}, and needs
 if you are installing by hand outside Docker, install
 \texttt{setuptools\textless{}70} first.
 
-\subsection{Where to go next}\label{where-to-go-next}
+\section{Where to go next}\label{where-to-go-next}
 
 \begin{itemize}
 \tightlist
