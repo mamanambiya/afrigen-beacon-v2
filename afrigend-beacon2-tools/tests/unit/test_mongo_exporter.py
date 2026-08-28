@@ -258,3 +258,105 @@ class TestCloseConnection:
     def test_no_client_safe(self):
         exp = _make_exporter()
         exp.close_connection()
+
+
+# ===================================================================
+# TestWriteJsonStream
+#
+# Both export paths accumulated the whole cursor into `data = []` before
+# writing (export_from_mongo.py ~135 and ~227). On the 42M-variant collection
+# that is the same class of failure that OOM-killed the import path.
+#
+# The obstacle was the metadata wrapper: it carries record_count, and a stream
+# does not know its length until it ends. Resolved by writing metadata LAST —
+# JSON objects are unordered, so {"data": [...], "metadata": {...}} is equally
+# valid and every existing test reads by key rather than position.
+# ===================================================================
+
+class TestWriteJsonStream:
+    def test_streams_and_reports_the_count(self, tmp_path):
+        exp = _make_exporter()
+        fp = tmp_path / "out.json"
+        n = exp._write_json_stream(iter([{"id": "1"}, {"id": "2"}, {"id": "3"}]), str(fp))
+        assert n == 3
+        content = json.loads(fp.read_text())
+        assert content["metadata"]["record_count"] == 3
+        assert [d["id"] for d in content["data"]] == ["1", "2", "3"]
+
+    def test_count_is_exact_without_being_known_in_advance(self, tmp_path):
+        """The whole difficulty: record_count cannot come from len()."""
+        exp = _make_exporter()
+        fp = tmp_path / "out.json"
+
+        def gen():
+            for i in range(57):
+                yield {"id": str(i)}
+
+        assert exp._write_json_stream(gen(), str(fp)) == 57
+        assert json.loads(fp.read_text())["metadata"]["record_count"] == 57
+
+    def test_does_not_materialise_the_cursor(self, tmp_path):
+        """
+        Detects INTERNAL buffering, which a signature check cannot.
+
+        The generator raises partway. A streaming writer has already put the
+        earlier records on disk; a buffering one has written nothing at all
+        because it never reached the write call.
+
+        Written as the write-side counterpart of
+        test_does_not_materialise_the_array in the importer tests, after a
+        mutation there showed that list(...) passed every other check.
+        """
+        exp = _make_exporter()
+        fp = tmp_path / "out.json"
+
+        def gen():
+            yield {"id": "0"}
+            yield {"id": "1"}
+            raise RuntimeError("cursor died midway")
+
+        with pytest.raises(RuntimeError):
+            exp._write_json_stream(gen(), str(fp))
+
+        assert fp.exists(), "buffering: nothing reached disk before the failure"
+        text = fp.read_text()
+        assert '"0"' in text and '"1"' in text, "buffering: records were held, not written"
+
+    def test_empty_stream_writes_valid_json(self, tmp_path):
+        exp = _make_exporter()
+        fp = tmp_path / "out.json"
+        assert exp._write_json_stream(iter([]), str(fp)) == 0
+        content = json.loads(fp.read_text())
+        assert content["data"] == []
+        assert content["metadata"]["record_count"] == 0
+
+    def test_without_metadata_is_a_bare_array(self, tmp_path):
+        exp = _make_exporter()
+        exp.config["output"]["include_metadata"] = False
+        fp = tmp_path / "out.json"
+        assert exp._write_json_stream(iter([{"id": "1"}, {"id": "2"}]), str(fp)) == 2
+        assert json.loads(fp.read_text()) == [{"id": "1"}, {"id": "2"}]
+
+    def test_pretty_and_compact_both_valid(self, tmp_path):
+        for pretty in (True, False):
+            exp = _make_exporter()
+            exp.config["output"]["pretty_json"] = pretty
+            exp.config["output"]["include_metadata"] = False
+            fp = tmp_path / f"out-{pretty}.json"
+            exp._write_json_stream(iter([{"id": "1"}, {"id": "2"}]), str(fp))
+            assert json.loads(fp.read_text()) == [{"id": "1"}, {"id": "2"}]
+
+    def test_creates_parent_dirs(self, tmp_path):
+        exp = _make_exporter()
+        fp = tmp_path / "sub" / "dir" / "out.json"
+        assert exp._write_json_stream(iter([{"id": "1"}]), str(fp)) == 1
+        assert fp.exists()
+
+    def test_non_serialisable_values_use_the_default(self, tmp_path):
+        """json.dump(default=str) applied per-record, as the buffered writer did."""
+        from datetime import datetime
+        exp = _make_exporter()
+        exp.config["output"]["include_metadata"] = False
+        fp = tmp_path / "out.json"
+        exp._write_json_stream(iter([{"when": datetime(2026, 8, 21)}]), str(fp))
+        assert "2026-08-21" in json.loads(fp.read_text())[0]["when"]
