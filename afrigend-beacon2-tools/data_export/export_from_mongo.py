@@ -11,7 +11,7 @@ import logging
 import argparse
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, Iterable, List, Optional, Union
 from tqdm import tqdm
 
 import yaml
@@ -131,27 +131,29 @@ class MongoExporter:
             if limit:
                 cursor = cursor.limit(limit)
             
-            # Export data
-            data = []
+            # Export data — streamed, never accumulated. A full collection
+            # here is tens of millions of documents; holding them to compute
+            # len() before writing is what made this an OOM risk.
             show_progress = self.config['processing']['show_progress']
-            
-            with tqdm(total=total_docs, desc=f"Exporting {collection_name}", 
+
+            with tqdm(total=total_docs, desc=f"Exporting {collection_name}",
                      disable=not show_progress) as pbar:
-                
-                for doc in cursor:
-                    # Convert ObjectId to string for JSON serialization
-                    doc = self._prepare_document_for_export(doc)
-                    data.append(doc)
-                    pbar.update(1)
-            
-            # Write to file
-            success = self._write_json_file(data, output_file)
-            
+
+                def _records():
+                    for doc in cursor:
+                        # Convert ObjectId to string for JSON serialization
+                        yield self._prepare_document_for_export(doc)
+                        pbar.update(1)
+
+                written = self._write_json_stream(_records(), output_file)
+
+            success = written is not None
+
             if success:
-                self.stats['records_exported'] += len(data)
+                self.stats['records_exported'] += written
                 self.stats['files_created'] += 1
                 self.stats['collections_exported'] += 1
-                self.logger.info(f"Successfully exported {len(data)} records to {output_file}")
+                self.logger.info(f"Successfully exported {written} records to {output_file}")
                 return True
             else:
                 return False
@@ -223,19 +225,19 @@ class MongoExporter:
             # Execute aggregation
             cursor = collection.aggregate(pipeline)
             
-            # Export results
-            data = []
-            for doc in cursor:
-                doc = self._prepare_document_for_export(doc)
-                data.append(doc)
-            
-            # Write to file
-            success = self._write_json_file(data, output_file)
-            
+            # Export results — streamed, same reasoning as the collection
+            # export above. An aggregation can return more than it was run on.
+            def _records():
+                for doc in cursor:
+                    yield self._prepare_document_for_export(doc)
+
+            written = self._write_json_stream(_records(), output_file)
+            success = written is not None
+
             if success:
-                self.stats['records_exported'] += len(data)
+                self.stats['records_exported'] += written
                 self.stats['files_created'] += 1
-                self.logger.info(f"Successfully exported {len(data)} aggregated records to {output_file}")
+                self.logger.info(f"Successfully exported {written} aggregated records to {output_file}")
                 return True
             else:
                 return False
@@ -254,6 +256,70 @@ class MongoExporter:
         # Handle other MongoDB types if needed
         # This is a simplified version - you might want to use json_util.dumps() for more complex cases
         return doc
+
+    def _write_json_stream(self, records: Iterable[Dict], output_file: str) -> int:
+        """Write ``records`` to ``output_file`` without holding them in memory.
+
+        Returns the number of records written.
+
+        Both export paths previously accumulated the whole cursor into a list
+        before writing. On a 42M-variant collection that is the same failure
+        that OOM-killed the import path.
+
+        The obstacle was the metadata wrapper: it carries ``record_count``, and
+        a stream does not know its length until it ends. Resolved by emitting
+        metadata **last** — JSON objects are unordered, so
+        ``{"data": [...], "metadata": {...}}`` is equally valid and every
+        consumer reads by key. That keeps the count exact without a second pass
+        and without trusting ``count_documents`` (which does not account for a
+        ``limit``, and races an active writer).
+
+        Records are serialised one at a time with the same ``default=str`` the
+        buffered writer used, so a datetime still round-trips.
+        """
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        pretty = self.config['output']['pretty_json']
+        include_metadata = self.config['output']['include_metadata']
+        indent = 2 if pretty else None
+        nl = '\n' if pretty else ''
+        pad = '  ' if pretty else ''
+
+        count = 0
+        with open(output_path, 'w') as f:
+            if include_metadata:
+                f.write('{' + nl + pad + '"data": [')
+            else:
+                f.write('[')
+
+            for record in records:
+                chunk = json.dumps(record, indent=indent, default=str)
+                if pretty:
+                    # Keep nested records readable inside the array.
+                    chunk = chunk.replace('\n', '\n' + pad * (2 if include_metadata else 1))
+                f.write(('' if count == 0 else ',') + nl + pad * (2 if include_metadata else 1) + chunk)
+                count += 1
+                # Flush per record so a partial file is readable if the
+                # cursor or the process dies midway. It is NOT what bounds
+                # memory — Python's buffered writer already does that, and
+                # removing this flush passes every test in the suite. Claiming
+                # it here as the memory guarantee would be wrong.
+                f.flush()
+
+            f.write(nl + (pad if include_metadata else '') + ']')
+
+            if include_metadata:
+                meta = {
+                    'export_date': datetime.now().isoformat(),
+                    'record_count': count,
+                    'source': 'mongodb_export',
+                }
+                f.write(',' + nl + pad + '"metadata": '
+                        + json.dumps(meta, indent=indent, default=str).replace('\n', '\n' + pad))
+                f.write(nl + '}')
+
+        return count
 
     def _write_json_file(self, data: List[Dict], output_file: str) -> bool:
         """Write data to JSON file."""
