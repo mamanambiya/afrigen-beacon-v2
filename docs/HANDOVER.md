@@ -32,7 +32,7 @@ Therefore the handover is a **single top-level link** that directs
 discoverers from "yes, this variant exists" → "use it via the federated
 imputation service":
 
-```json
+```text
 "beaconHandovers": [
   {
     "handoverType": {

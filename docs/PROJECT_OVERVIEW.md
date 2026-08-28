@@ -1169,7 +1169,7 @@ Format response according to mode:
 ```
 
 **Secure Mode:**
-```json
+```text
 {
   "data": [
     {

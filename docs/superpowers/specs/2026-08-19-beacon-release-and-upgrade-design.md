@@ -160,7 +160,7 @@ Stamp the release into the image at build time and report it.
 - `deploy.yml`'s build step passes the tag being built.
 - `/api/health` gains a `release` field beside the existing spec `version`:
 
-```json
+```text
 {"status": "healthy", "version": "2.0.0-boolean", "release": "v1.1.5", ...}
 ```
 

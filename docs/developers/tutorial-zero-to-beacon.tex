@@ -1,0 +1,637 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  10pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+  \setmainfont[]{Arial Unicode MS}
+  \setmonofont[]{Menlo}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{fvextra}
+\usepackage{xcolor}
+\usepackage[htt]{hyphenat}
+\usepackage[framemethod=TikZ]{mdframed}
+\definecolor{codebg}{RGB}{246,246,246}
+\DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,breakanywhere,fontsize=\small}
+\surroundwithmdframed[backgroundcolor=codebg,linewidth=0pt,innertopmargin=5pt,innerbottommargin=5pt,innerleftmargin=5pt,innerrightmargin=5pt,skipabove=6pt,skipbelow=6pt]{verbatim}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Tutorial: from zero to a running beacon},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Tutorial: from zero to a running beacon}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+Start with nothing. Finish with a GA4GH Beacon v2 service running on
+your machine, holding data, answering genomic queries correctly.
+
+\textbf{Time:} about 15 minutes, most of it waiting for a Docker build.
+
+Every command and every output on this page was run end to end on
+2026-08-19. Where output is shown, that is what was actually printed ---
+not what should be printed. If yours differs, something is wrong and the
+troubleshooting section at the end probably covers it.
+
+\begin{quote}
+\textbf{Deploying to a server instead?} This tutorial covers a local
+instance. For a public deployment on a VM with TLS and a tunnel, see PR
+\#9 (\texttt{docs/DEPLOYMENT\_TUTORIAL.md}), written from a real
+production deploy. It is not merged yet, so read it from the pull
+request.
+\end{quote}
+
+\section{What you will have at the
+end}\label{what-you-will-have-at-the-end}
+
+\begin{itemize}
+\tightlist
+\item
+  MongoDB 5, Redis 6 and the Django API running in Docker
+\item
+  100 variants, 50 individuals and 1 dataset loaded
+\item
+  A beacon that answers \texttt{exists:\ true} for a variant it holds
+  and \texttt{false} for one it does not
+\item
+  Enough understanding of the query path to change it safely
+\end{itemize}
+
+\section{Before you start}\label{before-you-start}
+
+You need \textbf{Docker} with Compose v2, and about 2 GB of free disk.
+
+\begin{verbatim}
+docker --version
+docker info >/dev/null && echo "daemon is running"
+\end{verbatim}
+
+Verified against Docker 29.2.1. You do \textbf{not} need Python, MongoDB
+or Node installed locally --- everything runs in containers. You will
+want Python later to run the test suites, but not for this tutorial.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{Step 1 --- Get the code}\label{step-1-get-the-code}
+
+\begin{verbatim}
+git clone git@github.com:AfriGen-D/variant-checker-beacon.git
+cd afrigen-beacon-v2
+\end{verbatim}
+
+\textbf{Clone somewhere Docker Desktop can share} --- under your home
+directory is safe. On macOS, \texttt{/tmp} is \emph{not} in Docker
+Desktop's shared paths by default, and bind mounts from there silently
+resolve to empty directories inside the VM instead of failing. That
+produces a container that cannot write its log file and an API that
+never starts, with an error that points nowhere near the cause. This
+cost an hour to diagnose while writing this page.
+
+\section{Step 2 --- Check the environment file
+exists}\label{step-2-check-the-environment-file-exists}
+
+The dev stack reads \texttt{.env.boolean} from the repository root.
+\textbf{It is gitignored (\texttt{.gitignore:62}), so a fresh clone does
+not have it} and \texttt{docker\ compose} will refuse to start:
+
+\begin{verbatim}
+env file /path/to/repo/.env.boolean not found
+\end{verbatim}
+
+Create it from the example:
+
+\begin{verbatim}
+cp .env.example .env.boolean
+\end{verbatim}
+
+\textbf{Then make one edit, or nothing will work.} \texttt{.env.example}
+is a \emph{production} template: it sets
+\texttt{SECURE\_SSL\_REDIRECT=True}, which makes Django 301-redirect
+every request to \texttt{https://localhost:8000} --- where nothing is
+listening. You get a stack that looks healthy in \texttt{docker\ ps} and
+answers nothing.
+
+\begin{verbatim}
+sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
+# GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+\end{verbatim}
+
+\texttt{DJANGO\_SECRET\_KEY} ships as \texttt{CHANGE\_ME}, which is fine
+locally. Never reuse it anywhere real.
+
+\begin{quote}
+If you change \texttt{.env.boolean} later,
+\texttt{docker\ compose\ restart} will \textbf{not} pick it up ---
+\texttt{env\_file} is read when the container is created. Use
+\texttt{docker\ compose\ -f\ compose/docker-compose.dev.yml\ up\ -d\ -\/-force-recreate\ beacon-api}.
+\end{quote}
+
+\section{Step 3 --- Start the stack}\label{step-3-start-the-stack}
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml up -d --build mongodb redis beacon-api
+\end{verbatim}
+
+The first run builds the API image and takes a few minutes. Compose
+starts MongoDB and Redis first and \textbf{waits for both to report
+healthy} before starting the API, so you should not see connection
+errors during startup.
+
+Expected tail:
+
+\begin{verbatim}
+ Container beacon-dev-mongodb  Healthy
+ Container beacon-dev-redis    Healthy
+ Container beacon-api-boolean  Started
+\end{verbatim}
+
+Confirm all three are up:
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml ps
+\end{verbatim}
+
+\begin{verbatim}
+NAME                 IMAGE                STATUS                    PORTS
+beacon-api-boolean   compose-beacon-api   Up (health: starting)     127.0.0.1:8000->8000/tcp
+beacon-dev-mongodb   mongo:5.0            Up (healthy)              127.0.0.1:27017->27017/tcp
+beacon-dev-redis     redis:6-alpine       Up (healthy)              127.0.0.1:6380->6379/tcp
+\end{verbatim}
+
+Note the ports bind to \texttt{127.0.0.1}, not \texttt{0.0.0.0} --- the
+stack is not reachable from your network. Redis is on \textbf{6380}
+locally to avoid colliding with any Redis you already run.
+
+\subsection{If Step 3 fails with ``address pools have been fully
+subnetted''}\label{if-step-3-fails-with-address-pools-have-been-fully-subnetted}
+
+\begin{verbatim}
+failed to create network walk_beacon-dev-network: Error response from daemon:
+all predefined address pools have been fully subnetted
+\end{verbatim}
+
+Docker has run out of private subnets, not disk or memory. Each compose
+project claims one and they are not released until the network is
+removed. On a machine running several projects you will hit this before
+you hit any resource limit.
+
+Find an idle network belonging to something you own and remove it:
+
+\begin{verbatim}
+docker network ls
+docker network inspect <name> --format '{{.Name}}: {{len .Containers}} attached'
+docker network rm <name>          # only if 0 attached, and only if it is yours
+\end{verbatim}
+
+Do \textbf{not} reach for \texttt{docker\ network\ prune}. It removes
+every unused network on the machine, including ones other people's
+stopped stacks will want back.
+
+\section{Step 4 --- Confirm the API is
+alive}\label{step-4-confirm-the-api-is-alive}
+
+Give it about ten seconds after the container starts, then:
+
+\begin{verbatim}
+curl -s http://localhost:8000/api/health
+\end{verbatim}
+
+\begin{verbatim}
+{"status":"healthy","version":"2.0.0-boolean",
+ "services":{"database":"healthy","cache":"healthy"}}
+\end{verbatim}
+
+Both \texttt{database} and \texttt{cache} must say \texttt{healthy}. If
+either does not, the API started before its dependencies were ready ---
+\texttt{docker\ compose\ restart\ beacon-api} and try again.
+
+\begin{quote}
+A passing health check proves the API can reach MongoDB and Redis. It
+proves \textbf{nothing} about whether queries return correct answers.
+That distinction has caused real incidents on this project;
+\texttt{docs/DEPLOYMENT\_PREREQUISITES.md} explains why at length.
+\end{quote}
+
+\section{Step 5 --- Query the empty
+beacon}\label{step-5-query-the-empty-beacon}
+
+Before loading anything, ask it something. This matters: you want to see
+what ``no'' looks like from a beacon that genuinely holds nothing, so
+you can tell it apart from a broken one later.
+
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=1000000'
+\end{verbatim}
+
+\begin{verbatim}
+{"meta": {...},
+ "responseSummary": {"exists": false, "numTotalResults": 0},
+ "response": {"resultSets": [], "beaconHandovers": [...]}}
+\end{verbatim}
+
+(Abbreviated --- \texttt{\{...\}} marks elided fields, so that block is
+illustrative rather than literal output. Every block fenced as
+\texttt{json} in this file is real and parses.)
+
+\textbf{Read that response shape carefully.} The answer is at
+\texttt{responseSummary.exists}. There is no top-level \texttt{exists}
+field, and several older documents in this repository show client
+examples that parse one. Those examples silently report ``not found''
+for everything. See \url{api-contract.md}.
+
+\section{Step 6 --- Load the test data}\label{step-6-load-the-test-data}
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T beacon-api \
+  python manage.py load_boolean_test_data --settings=beacon_project.settings_boolean
+\end{verbatim}
+
+\begin{verbatim}
+  - Individuals: 50
+
+You can now test Boolean queries!
+\end{verbatim}
+
+Check what landed:
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb \
+  mongo beacon_db --quiet --eval 'db.getCollectionNames().forEach(function(c){ print("  "+c+": "+db[c].count()) })'
+\end{verbatim}
+
+\begin{verbatim}
+  datasets: 1
+  individuals: 50
+  query_logs: 62
+  variants: 100
+\end{verbatim}
+
+The \texttt{mongo:5.0} image ships the \textbf{legacy \texttt{mongo}
+shell}. \texttt{mongosh} does not exist in it and any command using
+\texttt{mongosh} will fail --- some older docs in this repo get this
+wrong.
+
+\texttt{query\_logs} is the audit trail; it fills up as you query.
+Client IPs in it are truncated to a /24 before being written, and rows
+expire on a TTL index. See \texttt{beacon\_api/privacy.py}.
+
+\section{Step 7 --- Find a variant that actually
+exists}\label{step-7-find-a-variant-that-actually-exists}
+
+Do not guess coordinates. Ask the database what it holds:
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb \
+  mongo beacon_db --quiet --eval 'var v=db.variants.findOne();
+  print("assembly="+v.assembly_id+"  chr="+v.reference_name+"  start="+v.start+"  ref="+v.reference_bases+"  alt="+v.alternate_bases)'
+\end{verbatim}
+
+\begin{verbatim}
+assembly=GRCh38  chr=chr1  start=42497823  ref=A  alt=G
+\end{verbatim}
+
+Yours will differ --- use your own values below.
+
+Notice the chromosome is stored as \texttt{chr1}, not \texttt{1}. Which
+form ends up in the database depends on the ingest pipeline that wrote
+it, which is exactly why the query path matches both.
+
+\section{Step 8 --- Ask the beacon a real
+question}\label{step-8-ask-the-beacon-a-real-question}
+
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=42497823' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+\end{verbatim}
+
+\begin{verbatim}
+{'exists': True, 'numTotalResults': 1}
+\end{verbatim}
+
+\textbf{That is a working beacon.} You asked with a bare \texttt{1} and
+it matched data stored as \texttt{chr1}.
+
+Now confirm it says no when it should:
+
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=999' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+\end{verbatim}
+
+\begin{verbatim}
+{'exists': False, 'numTotalResults': 0}
+\end{verbatim}
+
+A negative control is not optional here. A beacon that answers
+\texttt{true} to everything looks identical to a working one until
+someone checks.
+
+\section{Step 9 --- See the vocabulary
+handling}\label{step-9-see-the-vocabulary-handling}
+
+\texttt{hg38} and \texttt{GRCh38} are the \textbf{same genome build} in
+different vocabularies --- UCSC and GRC. A beacon must answer both
+identically:
+
+\begin{verbatim}
+for a in GRCh38 hg38 HG38; do
+  printf '%-8s ' "$a"
+  curl -s "http://localhost:8000/api/g_variants?assemblyId=$a&referenceName=1&start=42497823" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"]["exists"])'
+done
+\end{verbatim}
+
+\begin{verbatim}
+GRCh38   True
+hg38     True
+HG38     True
+\end{verbatim}
+
+And an assembly the beacon cannot answer for is refused rather than
+answered:
+
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&start=42497823'
+\end{verbatim}
+
+\begin{verbatim}
+{"error": {"errorCode": 400,
+  "errorMessage": "Unknown assembly: GRCh99. Recognised builds: GRCh37, GRCh38. This beacon may not hold data for all of them."}}
+\end{verbatim}
+
+\subsection{Why this step exists}\label{why-this-step-exists}
+
+Until 2026-08-19 the middle line read \texttt{hg38\ \ \ False}. The
+query path compared the caller's literal spelling against what was
+stored, so a caller using UCSC vocabulary got a confident ``no'' for a
+variant the panel was holding. Nobody reported it, because nothing
+looked broken --- a researcher simply concluded the variant was absent
+from African reference data. It was two clicks away in the UI, because
+GRCh37 was then one of only two options in the assembly dropdown.
+
+Both halves of that are now closed. \texttt{hg38} canonicalises to
+\texttt{GRCh38}, and a build this beacon holds no data for is
+\textbf{refused rather than answered}:
+
+\begin{verbatim}
+curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&start=42497823'
+\end{verbatim}
+
+\begin{verbatim}
+{"error": {"errorCode": 501,
+  "errorMessage": "This beacon holds no data for assembly GRCh37, so it cannot answer for that build. This is not a statement about whether the variant exists. Data held: GRCh38."}}
+\end{verbatim}
+
+A 501 is a signal a client can act on; \texttt{exists:\ false} is an
+answer it will believe.
+
+Note what the 400 does \textbf{not} say. It lists the builds this beacon
+\emph{recognises}, and then explicitly declines to promise it holds data
+for them. An earlier wording said ``this beacon answers for GRCh37,
+GRCh38'' --- which sent a caller who mistyped an assembly straight into
+the 501 above, because GRCh37 is recognised and unheld.
+\texttt{assembly.py} has no access to the dataset catalogue, so rather
+than claim coverage it cannot verify, it stops claiming.
+
+The assembly dropdown now offers only GRCh38, so a UI user cannot reach
+this --- it is for API callers.
+
+That is the failure mode this project guards hardest against, and the
+rule it produced is the one to carry into your own changes: \textbf{when
+the beacon cannot answer the question you asked, it must refuse ---
+never answer a different question and return 200.}
+\texttt{beacon\_api/filters.py} is the reference implementation of that
+judgement and its docstring explains the reasoning;
+\texttt{beacon\_api/assembly.py} is the fix that came out of it.
+
+\subsection{One more thing to notice}\label{one-more-thing-to-notice}
+
+Look closely at a positive answer:
+
+\begin{verbatim}
+{'exists': True, 'numTotalResults': 0}
+\end{verbatim}
+
+\texttt{exists} is \texttt{True} while \texttt{numTotalResults} is
+\texttt{0}. That is not a typo --- the counter reports matching
+\emph{datasets} under some paths rather than matching variants. Do not
+build a client that infers absence from \texttt{numTotalResults}.
+
+\section{Step 9b --- Ask the same question by
+POST}\label{step-9b-ask-the-same-question-by-post}
+
+Beacon v2's own request format nests the parameters. Every client that
+follows the spec sends this shape, so it is worth seeing it work:
+
+\begin{verbatim}
+curl -s -X POST http://localhost:8000/api/g_variants \
+  -H 'Content-Type: application/json' \
+  -d '{"query":{"requestParameters":{"assemblyId":"GRCh38","referenceName":"1","start":<POS>}}}' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+\end{verbatim}
+
+Substitute the \texttt{\textless{}POS\textgreater{}} you found in Step
+7. It must return exactly what the GET in Step 8 returned --- if POST
+and GET ever disagree, one of them is wrong.
+
+\subsection{Why this step exists, and what it nearly
+shipped}\label{why-this-step-exists-and-what-it-nearly-shipped}
+
+Until 2026-08-20 this returned
+\texttt{400\ Invalid\ characters\ detected\ in\ query}. The sanitizer
+stringified the nested dict before pattern-matching, and the Python
+repr's own quote matched its injection pattern --- an injection verdict
+on punctuation the sanitizer introduced itself. GET was unaffected,
+because flat query strings never produce a repr, which is why nothing
+looked broken.
+
+Fixing that alone would have been worse than the bug. Nothing in the
+codebase read \texttt{query.requestParameters}, so once the body was let
+through the query carried no filters at all: an impossible locus
+returned \texttt{exists:\ true} with \texttt{numTotalResults:\ 100},
+identical to an empty body. An honest error would have become a
+confident YES for a variant that cannot exist.
+
+Both halves shipped together. The lesson is worth more than the fix:
+\textbf{a change that unblocks a path is not safe until you check what
+is behind the path.}
+
+\section{Step 10 --- Look around the rest of the
+API}\label{step-10-look-around-the-rest-of-the-api}
+
+\begin{verbatim}
+curl -s http://localhost:8000/api/          | head -c 200   # beacon info
+curl -s http://localhost:8000/api/datasets                  # what is loaded
+curl -s http://localhost:8000/api/entry_types               # supported entry types
+curl -s http://localhost:8000/api/map                       # endpoint map
+curl -s 'http://localhost:8000/api/individuals?sex=MALE'
+\end{verbatim}
+
+\section{Step 11 --- Run the test
+suites}\label{step-11-run-the-test-suites}
+
+The query-correctness suites need \textbf{no dependencies at all} --- no
+Django, no database, no network:
+
+\begin{verbatim}
+python3 -m unittest \
+  beacon_api.test_query_semantics \
+  beacon_api.test_query_injection \
+  beacon_api.test_pagination_filters \
+  beacon_api.test_assembly \
+  beacon_api.test_query_vocabulary \
+  beacon_api.test_capabilities \
+  beacon_api.test_release \
+  beacon_api.test_request_body
+\end{verbatim}
+
+\begin{verbatim}
+Ran 200 tests in 0.002s
+
+OK
+\end{verbatim}
+
+That is the merge gate. If you change how a query is interpreted, these
+are the tests that must stay green --- and the ones you extend.
+
+\texttt{beacon\_api.test\_middleware} is different: it imports Django,
+so it needs a Python between \textbf{3.9 and 3.12}. Django 4.0 cannot
+import on 3.13+, which removed the \texttt{cgi} module it depends on.
+
+\section{Step 12 --- Shut down}\label{step-12-shut-down}
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml down
+\end{verbatim}
+
+Add \texttt{-v} to delete the MongoDB volume as well and start
+completely fresh next time.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{Troubleshooting}\label{troubleshooting}
+
+\textbf{\texttt{database:\ unhealthy} in the health response.} The API
+started before MongoDB finished initialising.
+\texttt{docker\ compose\ -f\ compose/docker-compose.dev.yml\ restart\ beacon-api}.
+
+\textbf{Port 8000, 27017 or 6380 already allocated.} Something else is
+using it. Find it with \texttt{lsof\ -i\ :8000}, or change the host side
+of the mapping in \texttt{compose/docker-compose.dev.yml}.
+
+\textbf{\texttt{mongosh:\ not\ found}.} The \texttt{mongo:5.0} image
+only has the legacy \texttt{mongo} shell. Use \texttt{mongo}.
+
+\textbf{Every query returns \texttt{exists:\ false} after loading data.}
+Almost always a coordinate or vocabulary mismatch rather than a broken
+beacon. Check three things, in order: are you using the assembly the
+data was loaded under (Step 7 prints it); is your \texttt{start} the
+stored 0-based value rather than the 1-based VCF position; and does the
+variant you are asking about actually exist (ask Mongo directly, as in
+Step 7).
+
+\textbf{A query changed answers after you edited code.} Redis caches
+responses for five minutes.
+\texttt{docker\ compose\ -f\ compose/docker-compose.dev.yml\ exec\ redis\ redis-cli\ FLUSHDB}.
+
+\textbf{Everything returns HTTP 301 / \texttt{curl} shows
+\texttt{Location:\ https://localhost:8000}.}
+\texttt{SECURE\_SSL\_REDIRECT=True} is still set in
+\texttt{.env.boolean}. See Step 2 --- and remember the container must be
+recreated, not restarted, for an env change to apply.
+
+\textbf{\texttt{ValueError:\ Unable\ to\ configure\ handler\ \textquotesingle{}file\textquotesingle{}}
+in the API logs, container never becomes healthy.} The container runs as
+the non-root user \texttt{beacon} (uid 1000,
+\texttt{Dockerfile.boolean:39}) and cannot write
+\texttt{logs/beacon.log}. Almost always means the repository is
+somewhere Docker Desktop does not share --- see Step 1. If you are on a
+shared path, Docker creates \texttt{logs/} with workable ownership
+automatically and you should not hit this.
+
+\textbf{Two clones of this repo fight over the same containers.} The
+Compose project name is derived from the directory holding the compose
+file, which is \texttt{compose/} in every clone --- so two checkouts
+both resolve to a project called \texttt{compose} and share containers
+\emph{and} the MongoDB volume. Pass \texttt{-p\ beacon-myfeature} to
+\texttt{docker\ compose} in a second checkout, or you will be querying
+the other one's data without noticing.
+
+\textbf{The build fails installing Python dependencies.} The backend is
+pinned to Django 4.0.10 by \texttt{django-mongoengine}, and needs
+\texttt{setuptools\textless{}70}. The Dockerfile handles the ordering;
+if you are installing by hand outside Docker, install
+\texttt{setuptools\textless{}70} first.
+
+\section{Where to go next}\label{where-to-go-next}
+
+\begin{itemize}
+\tightlist
+\item
+  \url{architecture.md} --- how a query becomes an answer
+\item
+  \url{testing.md} --- what runs, and what gates a merge
+\item
+  \url{api-contract.md} --- the response envelope, and the trap in it
+\item
+  \url{contributing.md} --- branching, commits, PRs
+\end{itemize}
+
+Loading \textbf{real} genomic data rather than the test fixture is a
+separate job: see \texttt{docs/ILIFU\_DATA\_LOADING\_GUIDE.md} and
+\texttt{afrigend-beacon2-tools/README.md}. Read the data-tools caveats
+in \url{testing.md} before running an import --- there are known issues
+with loading a second dataset over a first.
+
+\end{document}

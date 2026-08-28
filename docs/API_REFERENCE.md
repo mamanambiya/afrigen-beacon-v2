@@ -1654,7 +1654,7 @@ alternateBases=T"
 ```
 
 **Response**:
-```json
+```text
 {
   "meta": { "beaconId": "org.afrigen-d.beacon", "apiVersion": "v2.0.0",
             "returnedGranularity": "boolean" },

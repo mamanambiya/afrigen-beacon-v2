@@ -135,7 +135,7 @@ All schemas align with [GA4GH Beacon v2 Models](https://docs.genomebeacons.org/m
 - Trade storage for query performance
 
 **Example**:
-```json
+```text
 {
   "id": "variant_001",
   "dataset_id": "dataset_1",

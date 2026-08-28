@@ -769,7 +769,11 @@ Clients specify desired granularity via `requestedGranularity` in the query. The
   "query": { "referenceName": "11", "start": 5227002 },
   "requestedGranularity": "boolean"
 }
-// Response:
+```
+
+Response:
+
+```json
 {
   "meta": { "returnedGranularity": "boolean" },
   "responseSummary": { "exists": true },
@@ -787,7 +791,11 @@ Clients specify desired granularity via `requestedGranularity` in the query. The
   "query": { "referenceName": "11", "start": 5227002 },
   "requestedGranularity": "record"
 }
-// Response:
+```
+
+Response:
+
+```json
 {
   "meta": { "returnedGranularity": "record" },
   "responseSummary": { "exists": true },

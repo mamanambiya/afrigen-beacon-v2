@@ -48,7 +48,8 @@ jobs:
             beacon_api.test_query_vocabulary \
             beacon_api.test_capabilities \
             beacon_api.test_release \
-            beacon_api.test_request_body
+            beacon_api.test_request_body \
+            docs.developers.test_docs_json
 
       # These two need Django + DRF, because validators.py and middleware.py
       # import them. The suites above are deliberately Django-free and run
