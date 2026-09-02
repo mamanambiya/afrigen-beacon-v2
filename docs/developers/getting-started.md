@@ -8,8 +8,8 @@ condensed version plus what you need on day two.
 ## The short version
 
 ```bash
-git clone git@github.com:AfriGen-D/variant-checker-beacon.git
-cd afrigen-beacon-v2      # somewhere Docker shares; not /tmp on macOS
+git clone https://github.com/AfriGen-D/variant-checker-beacon.git
+cd variant-checker-beacon   # somewhere Docker shares; not /tmp on macOS
 cp .env.example .env.boolean
 sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
 docker compose -f compose/docker-compose.dev.yml up -d --build mongodb redis beacon-api
