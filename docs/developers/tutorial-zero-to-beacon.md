@@ -41,9 +41,27 @@ to run the test suites, but not for this tutorial.
 ## Step 1 — Get the code
 
 ```bash
-git clone git@github.com:AfriGen-D/variant-checker-beacon.git
-cd afrigen-beacon-v2
+git clone https://github.com/AfriGen-D/variant-checker-beacon.git
+cd variant-checker-beacon
 ```
+
+**Use the HTTPS URL above unless you have already set up an SSH key with
+GitHub.** The repository is public, so HTTPS needs no account at all. The SSH
+form, `git@github.com:AfriGen-D/variant-checker-beacon.git`, authenticates even
+for public repositories, and without a key on your GitHub account it fails with
+
+```text
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
+Please make sure you have the correct access rights and the repository exists.
+```
+
+which reads as though the repository is missing or private. It is neither —
+that is an authentication failure wearing a misleading message.
+
+**The directory is `variant-checker-beacon`.** The repository was renamed from
+`afrigen-beacon-v2`; `git clone` names the directory after the repository, not
+after the old name.
 
 **Clone somewhere Docker Desktop can share** — under your home directory is
 safe. On macOS, `/tmp` is *not* in Docker Desktop's shared paths by default, and
