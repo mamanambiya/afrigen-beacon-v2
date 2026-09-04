@@ -32,6 +32,31 @@ docker --version
 docker info >/dev/null && echo "daemon is running"
 ```
 
+### On Windows
+
+**Every command on this page is written for a POSIX shell** — bash or zsh, as
+on macOS and Linux. Two things break in PowerShell:
+
+- **Line continuation.** These pages end a wrapped command with a backslash.
+  PowerShell uses a backtick (`` ` ``) instead, so it treats the backslash line
+  as a complete command and fails. Either join the command onto one line, or
+  swap the trailing `\` for `` ` ``.
+- **`sed` does not exist.** Step 2 uses it to edit one line of a config file.
+  Edit that file in a text editor instead.
+
+**The smoother path is WSL2.** Docker Desktop on Windows already runs a WSL2
+backend, so opening a WSL shell costs nothing and every command here then works
+exactly as written, with no translation. Run `wsl` and clone the repository
+inside the Linux filesystem — not under `/mnt/c`, where Docker bind mounts are
+slow.
+
+If you would rather stay in PowerShell, the joining rule above is the whole
+translation. For example, step 6's check becomes one line:
+
+```powershell
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'db.getCollectionNames().forEach(function(c){ print("  "+c+": "+db[c].count()) })'
+```
+
 Verified against Docker 29.2.1. You do **not** need Python, MongoDB or Node
 installed locally — everything runs in containers. You will want Python later
 to run the test suites, but not for this tutorial.
@@ -94,6 +119,12 @@ a stack that looks healthy in `docker ps` and answers nothing.
 ```bash
 sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
 # GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+```
+
+On Windows PowerShell, `sed` does not exist:
+
+```powershell
+(Get-Content .env.boolean) -replace '^SECURE_SSL_REDIRECT=True','SECURE_SSL_REDIRECT=False' | Set-Content .env.boolean
 ```
 
 `DJANGO_SECRET_KEY` ships as `CHANGE_ME`, which is fine locally. Never reuse it

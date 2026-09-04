@@ -117,6 +117,37 @@ docker --version
 docker info >/dev/null && echo "daemon is running"
 \end{verbatim}
 
+\subsection{On Windows}\label{on-windows}
+
+\textbf{Every command on this page is written for a POSIX shell} ---
+bash or zsh, as on macOS and Linux. Two things break in PowerShell:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Line continuation.} These pages end a wrapped command with a
+  backslash. PowerShell uses a backtick (\texttt{\textasciigrave{}})
+  instead, so it treats the backslash line as a complete command and
+  fails. Either join the command onto one line, or swap the trailing
+  \texttt{\textbackslash{}} for \texttt{\textasciigrave{}}.
+\item
+  \textbf{\texttt{sed} does not exist.} Step 2 uses it to edit one line
+  of a config file. Edit that file in a text editor instead.
+\end{itemize}
+
+\textbf{The smoother path is WSL2.} Docker Desktop on Windows already
+runs a WSL2 backend, so opening a WSL shell costs nothing and every
+command here then works exactly as written, with no translation. Run
+\texttt{wsl} and clone the repository inside the Linux filesystem ---
+not under \texttt{/mnt/c}, where Docker bind mounts are slow.
+
+If you would rather stay in PowerShell, the joining rule above is the
+whole translation. For example, step 6's check becomes one line:
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'db.getCollectionNames().forEach(function(c){ print("  "+c+": "+db[c].count()) })'
+\end{verbatim}
+
 Verified against Docker 29.2.1. You do \textbf{not} need Python, MongoDB
 or Node installed locally --- everything runs in containers. You will
 want Python later to run the test suites, but not for this tutorial.
@@ -187,6 +218,12 @@ answers nothing.
 \begin{verbatim}
 sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
 # GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+\end{verbatim}
+
+On Windows PowerShell, \texttt{sed} does not exist:
+
+\begin{verbatim}
+(Get-Content .env.boolean) -replace '^SECURE_SSL_REDIRECT=True','SECURE_SSL_REDIRECT=False' | Set-Content .env.boolean
 \end{verbatim}
 
 \texttt{DJANGO\_SECRET\_KEY} ships as \texttt{CHANGE\_ME}, which is fine
