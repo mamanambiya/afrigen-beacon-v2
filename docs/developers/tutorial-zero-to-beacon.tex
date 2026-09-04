@@ -47,7 +47,7 @@
 \usepackage{fvextra}
 \usepackage{xcolor}
 \usepackage[htt]{hyphenat}
-\usepackage[framemethod=TikZ]{mdframed}
+\usepackage{mdframed}
 \definecolor{codebg}{RGB}{246,246,246}
 \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,breakanywhere,fontsize=\small}
 \surroundwithmdframed[backgroundcolor=codebg,linewidth=0pt,innertopmargin=5pt,innerbottommargin=5pt,innerleftmargin=5pt,innerrightmargin=5pt,skipabove=6pt,skipbelow=6pt]{verbatim}
@@ -117,6 +117,37 @@ docker --version
 docker info >/dev/null && echo "daemon is running"
 \end{verbatim}
 
+\subsection{On Windows}\label{on-windows}
+
+\textbf{Every command on this page is written for a POSIX shell} ---
+bash or zsh, as on macOS and Linux. Two things break in PowerShell:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Line continuation.} These pages end a wrapped command with a
+  backslash. PowerShell uses a backtick (\texttt{\textasciigrave{}})
+  instead, so it treats the backslash line as a complete command and
+  fails. Either join the command onto one line, or swap the trailing
+  \texttt{\textbackslash{}} for \texttt{\textasciigrave{}}.
+\item
+  \textbf{\texttt{sed} does not exist.} Step 2 uses it to edit one line
+  of a config file. Edit that file in a text editor instead.
+\end{itemize}
+
+\textbf{The smoother path is WSL2.} Docker Desktop on Windows already
+runs a WSL2 backend, so opening a WSL shell costs nothing and every
+command here then works exactly as written, with no translation. Run
+\texttt{wsl} and clone the repository inside the Linux filesystem ---
+not under \texttt{/mnt/c}, where Docker bind mounts are slow.
+
+If you would rather stay in PowerShell, the joining rule above is the
+whole translation. For example, step 6's check becomes one line:
+
+\begin{verbatim}
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'db.getCollectionNames().forEach(function(c){ print("  "+c+": "+db[c].count()) })'
+\end{verbatim}
+
 Verified against Docker 29.2.1. You do \textbf{not} need Python, MongoDB
 or Node installed locally --- everything runs in containers. You will
 want Python later to run the test suites, but not for this tutorial.
@@ -126,9 +157,31 @@ want Python later to run the test suites, but not for this tutorial.
 \section{Step 1 --- Get the code}\label{step-1-get-the-code}
 
 \begin{verbatim}
-git clone git@github.com:AfriGen-D/variant-checker-beacon.git
-cd afrigen-beacon-v2
+git clone https://github.com/AfriGen-D/variant-checker-beacon.git
+cd variant-checker-beacon
 \end{verbatim}
+
+\textbf{Use the HTTPS URL above unless you have already set up an SSH
+key with GitHub.} The repository is public, so HTTPS needs no account at
+all. The SSH form,
+\texttt{git@github.com:AfriGen-D/variant-checker-beacon.git},
+authenticates even for public repositories, and without a key on your
+GitHub account it fails with
+
+\begin{verbatim}
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
+Please make sure you have the correct access rights and the repository exists.
+\end{verbatim}
+
+which reads as though the repository is missing or private. It is
+neither --- that is an authentication failure wearing a misleading
+message.
+
+\textbf{The directory is \texttt{variant-checker-beacon}.} The
+repository was renamed from \texttt{afrigen-beacon-v2};
+\texttt{git\ clone} names the directory after the repository, not after
+the old name.
 
 \textbf{Clone somewhere Docker Desktop can share} --- under your home
 directory is safe. On macOS, \texttt{/tmp} is \emph{not} in Docker
@@ -165,6 +218,12 @@ answers nothing.
 \begin{verbatim}
 sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
 # GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+\end{verbatim}
+
+On Windows PowerShell, \texttt{sed} does not exist:
+
+\begin{verbatim}
+(Get-Content .env.boolean) -replace '^SECURE_SSL_REDIRECT=True','SECURE_SSL_REDIRECT=False' | Set-Content .env.boolean
 \end{verbatim}
 
 \texttt{DJANGO\_SECRET\_KEY} ships as \texttt{CHANGE\_ME}, which is fine
