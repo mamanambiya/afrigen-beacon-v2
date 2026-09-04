@@ -27,16 +27,21 @@ PREAMBLE = [
     r"  - \usepackage{fvextra}",
     r"  - \usepackage{xcolor}",
     r"  - \usepackage[htt]{hyphenat}",
-    # NOT framemethod=TikZ: that method cannot split a shaded box across a
-    # page boundary and fails with a cascade of "Overfull \\vbox" as it
-    # retries — 204 of them on the beacon tutorial, against 0 here.
-    r"  - \usepackage{mdframed}",
-    r"  - \definecolor{codebg}{RGB}{246,246,246}",
+    # Code is marked with a grey RULE, not a filled background.
+    #
+    # A shaded box needs a wrapper environment, and no wrapper survives a page
+    # break here. mdframed cannot split one — 204 "Overfull \\vbox" warnings on
+    # the beacon tutorial, with framemethod=TikZ AND with the default method.
+    # tcolorbox and a \\renewenvironment around framed both fail earlier still,
+    # with "File ended while scanning use of \\FancyVerbGetLine", because
+    # redefining verbatim breaks fancyvrb's own line scanner.
+    #
+    # fancyvrb's frame= is applied per line, so it breaks across pages by
+    # construction: 0 vbox overflows, same page count.
+    r"  - \definecolor{codebg}{RGB}{225,225,225}",
     r"  - \DefineVerbatimEnvironment{verbatim}{Verbatim}"
-    r"{breaklines,breakanywhere,fontsize=\small}",
-    r"  - \surroundwithmdframed[backgroundcolor=codebg,linewidth=0pt,"
-    r"innertopmargin=5pt,innerbottommargin=5pt,innerleftmargin=5pt,"
-    r"innerrightmargin=5pt,skipabove=6pt,skipbelow=6pt]{verbatim}",
+    r"{breaklines,breakanywhere,fontsize=\small,frame=leftline,"
+    r"framerule=3pt,rulecolor=\color{codebg},framesep=6pt}",
 ]
 
 

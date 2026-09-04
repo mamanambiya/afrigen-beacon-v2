@@ -116,9 +116,16 @@ template: it sets `SECURE_SSL_REDIRECT=True`, which makes Django 301-redirect
 every request to `https://localhost:8000` — where nothing is listening. You get
 a stack that looks healthy in `docker ps` and answers nothing.
 
+On macOS:
+
 ```bash
-sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
-# GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+```
+
+On GNU/Linux, without the empty argument after `-i`:
+
+```bash
+sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
 ```
 
 On Windows PowerShell, `sed` does not exist:
@@ -185,8 +192,11 @@ Find an idle network belonging to something you own and remove it:
 ```bash
 docker network ls
 docker network inspect <name> --format '{{.Name}}: {{len .Containers}} attached'
-docker network rm <name>          # only if 0 attached, and only if it is yours
+docker network rm <name>
 ```
+
+Only remove a network the inspect showed as **0 attached**, and only one that
+belongs to something of yours.
 
 Do **not** reach for `docker network prune`. It removes every unused network on
 the machine, including ones other people's stopped stacks will want back.
@@ -279,16 +289,25 @@ truncated to a /24 before being written, and rows expire on a TTL index. See
 Do not guess coordinates. Ask the database what it holds:
 
 ```bash
-docker compose -f compose/docker-compose.dev.yml exec -T mongodb \
-  mongo beacon_db --quiet --eval 'var v=db.variants.findOne();
-  print("assembly="+v.assembly_id+"  chr="+v.reference_name+"  start="+v.start+"  ref="+v.reference_bases+"  alt="+v.alternate_bases)'
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'var v=db.variants.findOne(); print("assembly="+v.assembly_id+"  chr="+v.reference_name+"  start="+v.start+"  ref="+v.reference_bases+"  alt="+v.alternate_bases)'
 ```
 
 ```text
-assembly=GRCh38  chr=chr1  start=42497823  ref=A  alt=G
+assembly=GRCh38  chr=chr1  start=31959452  ref=T  alt=C
 ```
 
-Yours will differ — use your own values below.
+**Your position will be different, and that is not cosmetic.** The loader picks
+each position with `random.randint(1000000, 50000000)`, so every install holds a
+different 100 variants. A position copied from this page will almost certainly
+not exist in your database, and the beacon will correctly answer `exists: false`
+— which looks exactly like a broken beacon.
+
+So capture it into a shell variable and use that from here on:
+
+```bash
+POS=$(docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'print(db.variants.findOne().start)' | tr -d '\r\n')
+echo "$POS"
+```
 
 Notice the chromosome is stored as `chr1`, not `1`. Which form ends up in the
 database depends on the ingest pipeline that wrote it, which is exactly why the
@@ -297,13 +316,20 @@ query path matches both.
 ## Step 8 — Ask the beacon a real question
 
 ```bash
-curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=42497823' \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+curl -s "http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=$POS" | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
 ```
 
 ```text
-{'exists': True, 'numTotalResults': 1}
+{'exists': True, 'numTotalResults': 0}
 ```
+
+**`numTotalResults` really is 0 here, and that is not a contradiction.** On this
+path the counter reports matching *datasets*, not matching variants. Read
+`exists` and never infer absence from the count — see
+[api-contract.md](api-contract.md).
+
+Note the double quotes around the URL. `$POS` does not expand inside single
+quotes.
 
 **That is a working beacon.** You asked with a bare `1` and it matched data
 stored as `chr1`.
@@ -330,7 +356,7 @@ UCSC and GRC. A beacon must answer both identically:
 ```bash
 for a in GRCh38 hg38 HG38; do
   printf '%-8s ' "$a"
-  curl -s "http://localhost:8000/api/g_variants?assemblyId=$a&referenceName=1&start=42497823" \
+  curl -s "http://localhost:8000/api/g_variants?assemblyId=$a&referenceName=1&start=$POS" \
     | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"]["exists"])'
 done
 ```
@@ -344,7 +370,7 @@ HG38     True
 And an assembly the beacon cannot answer for is refused rather than answered:
 
 ```bash
-curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&start=42497823'
+curl -s "http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&start=$POS"
 ```
 
 ```json
@@ -365,7 +391,7 @@ Both halves of that are now closed. `hg38` canonicalises to `GRCh38`, and a
 build this beacon holds no data for is **refused rather than answered**:
 
 ```bash
-curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&start=42497823'
+curl -s "http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&start=$POS"
 ```
 
 ```json
@@ -439,11 +465,19 @@ that unblocks a path is not safe until you check what is behind the path.**
 
 ## Step 10 — Look around the rest of the API
 
+| Endpoint | What it returns |
+| --- | --- |
+| `/api/` | Beacon info |
+| `/api/datasets` | What is loaded |
+| `/api/entry_types` | Supported entry types |
+| `/api/map` | Endpoint map |
+| `/api/individuals?sex=MALE` | A filtered entity query |
+
 ```bash
-curl -s http://localhost:8000/api/          | head -c 200   # beacon info
-curl -s http://localhost:8000/api/datasets                  # what is loaded
-curl -s http://localhost:8000/api/entry_types               # supported entry types
-curl -s http://localhost:8000/api/map                       # endpoint map
+curl -s http://localhost:8000/api/ | head -c 200
+curl -s http://localhost:8000/api/datasets
+curl -s http://localhost:8000/api/entry_types
+curl -s http://localhost:8000/api/map
 curl -s 'http://localhost:8000/api/individuals?sex=MALE'
 ```
 
