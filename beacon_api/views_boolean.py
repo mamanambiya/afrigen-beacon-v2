@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import ParseError
 from django.conf import settings
 from django.views.decorators.cache import cache_page
 from datetime import datetime
@@ -405,6 +406,19 @@ def variant_query_boolean(request):
             'referenceName together with start (and optionally end) to narrow '
             'it to a genomic locus.',
         )
+    except ParseError as exc:
+        # DRF raises this from `request.data` when the body is not valid JSON.
+        # It is a 400-class exception, but it is raised inside this try, so
+        # without this clause the generic handler below reports it as 500 —
+        # telling a client author to look at the server when the fault is in
+        # their request. The developer tutorial's own placeholder body landed
+        # here. See beacon_api/test_malformed_body.py.
+        message = str(getattr(exc, 'detail', exc)) or 'Malformed JSON body'
+        logger.warning(f"Unparseable request body: {message}")
+        return _error_response(
+            status.HTTP_400_BAD_REQUEST,
+            f"Could not parse the request body as JSON: {message}",
+        )
     except Exception as e:
         logger.error(f"Query error: {e}", exc_info=True)
         return _server_error()
@@ -521,6 +535,19 @@ def individual_query_boolean(request):
             validated_params={'skip': skip, 'limit': limit},
         ))
 
+    except ParseError as exc:
+        # DRF raises this from `request.data` when the body is not valid JSON.
+        # It is a 400-class exception, but it is raised inside this try, so
+        # without this clause the generic handler below reports it as 500 —
+        # telling a client author to look at the server when the fault is in
+        # their request. The developer tutorial's own placeholder body landed
+        # here. See beacon_api/test_malformed_body.py.
+        message = str(getattr(exc, 'detail', exc)) or 'Malformed JSON body'
+        logger.warning(f"Unparseable request body: {message}")
+        return _error_response(
+            status.HTTP_400_BAD_REQUEST,
+            f"Could not parse the request body as JSON: {message}",
+        )
     except Exception as e:
         logger.error(f"Query error: {e}", exc_info=True)
         return _server_error()
