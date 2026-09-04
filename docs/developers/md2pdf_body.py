@@ -27,7 +27,10 @@ PREAMBLE = [
     r"  - \usepackage{fvextra}",
     r"  - \usepackage{xcolor}",
     r"  - \usepackage[htt]{hyphenat}",
-    r"  - \usepackage[framemethod=TikZ]{mdframed}",
+    # NOT framemethod=TikZ: that method cannot split a shaded box across a
+    # page boundary and fails with a cascade of "Overfull \\vbox" as it
+    # retries — 204 of them on the beacon tutorial, against 0 here.
+    r"  - \usepackage{mdframed}",
     r"  - \definecolor{codebg}{RGB}{246,246,246}",
     r"  - \DefineVerbatimEnvironment{verbatim}{Verbatim}"
     r"{breaklines,breakanywhere,fontsize=\small}",
