@@ -116,9 +116,16 @@ template: it sets `SECURE_SSL_REDIRECT=True`, which makes Django 301-redirect
 every request to `https://localhost:8000` — where nothing is listening. You get
 a stack that looks healthy in `docker ps` and answers nothing.
 
+On macOS:
+
 ```bash
-sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean   # macOS
-# GNU/Linux: sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
+```
+
+On GNU/Linux, without the empty argument after `-i`:
+
+```bash
+sed -i 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
 ```
 
 On Windows PowerShell, `sed` does not exist:
@@ -185,8 +192,11 @@ Find an idle network belonging to something you own and remove it:
 ```bash
 docker network ls
 docker network inspect <name> --format '{{.Name}}: {{len .Containers}} attached'
-docker network rm <name>          # only if 0 attached, and only if it is yours
+docker network rm <name>
 ```
+
+Only remove a network the inspect showed as **0 attached**, and only one that
+belongs to something of yours.
 
 Do **not** reach for `docker network prune`. It removes every unused network on
 the machine, including ones other people's stopped stacks will want back.
@@ -439,11 +449,19 @@ that unblocks a path is not safe until you check what is behind the path.**
 
 ## Step 10 — Look around the rest of the API
 
+| Endpoint | What it returns |
+| --- | --- |
+| `/api/` | Beacon info |
+| `/api/datasets` | What is loaded |
+| `/api/entry_types` | Supported entry types |
+| `/api/map` | Endpoint map |
+| `/api/individuals?sex=MALE` | A filtered entity query |
+
 ```bash
-curl -s http://localhost:8000/api/          | head -c 200   # beacon info
-curl -s http://localhost:8000/api/datasets                  # what is loaded
-curl -s http://localhost:8000/api/entry_types               # supported entry types
-curl -s http://localhost:8000/api/map                       # endpoint map
+curl -s http://localhost:8000/api/ | head -c 200
+curl -s http://localhost:8000/api/datasets
+curl -s http://localhost:8000/api/entry_types
+curl -s http://localhost:8000/api/map
 curl -s 'http://localhost:8000/api/individuals?sex=MALE'
 ```
 

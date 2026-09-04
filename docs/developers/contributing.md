@@ -9,7 +9,6 @@ Never commit to `main`. Branch, push, open a PR:
 
 ```bash
 git checkout -b fix/<topic> origin/main
-# work
 git push -u origin fix/<topic>
 gh pr create
 ```
