@@ -437,14 +437,20 @@ Beacon v2's own request format nests the parameters. Every client that follows
 the spec sends this shape, so it is worth seeing it work:
 
 ```bash
-curl -s -X POST http://localhost:8000/api/g_variants \
-  -H 'Content-Type: application/json' \
-  -d '{"query":{"requestParameters":{"assemblyId":"GRCh38","referenceName":"1","start":<POS>}}}' \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+curl -s -X POST http://localhost:8000/api/g_variants -H 'Content-Type: application/json' -d "{\"query\":{\"requestParameters\":{\"assemblyId\":\"GRCh38\",\"referenceName\":\"1\",\"start\":$POS}}}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
 ```
 
-Substitute the `<POS>` you found in Step 7. It must return exactly what the GET
-in Step 8 returned — if POST and GET ever disagree, one of them is wrong.
+```text
+{'exists': True, 'numTotalResults': 0}
+```
+
+**The body is in double quotes, and the inner quotes are escaped.** JSON needs
+double quotes and the shell needs `$POS` to expand, so single quotes will not
+do here. Pasting a literal `<POS>` sends invalid JSON and the server answers
+`500`, which tells you nothing about what you did wrong.
+
+It must return exactly what the GET in Step 8 returned — if POST and GET ever
+disagree, one of them is wrong.
 
 ### Why this step exists, and what it nearly shipped
 
