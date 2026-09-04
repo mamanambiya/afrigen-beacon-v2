@@ -289,16 +289,25 @@ truncated to a /24 before being written, and rows expire on a TTL index. See
 Do not guess coordinates. Ask the database what it holds:
 
 ```bash
-docker compose -f compose/docker-compose.dev.yml exec -T mongodb \
-  mongo beacon_db --quiet --eval 'var v=db.variants.findOne();
-  print("assembly="+v.assembly_id+"  chr="+v.reference_name+"  start="+v.start+"  ref="+v.reference_bases+"  alt="+v.alternate_bases)'
+docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'var v=db.variants.findOne(); print("assembly="+v.assembly_id+"  chr="+v.reference_name+"  start="+v.start+"  ref="+v.reference_bases+"  alt="+v.alternate_bases)'
 ```
 
 ```text
-assembly=GRCh38  chr=chr1  start=42497823  ref=A  alt=G
+assembly=GRCh38  chr=chr1  start=31959452  ref=T  alt=C
 ```
 
-Yours will differ — use your own values below.
+**Your position will be different, and that is not cosmetic.** The loader picks
+each position with `random.randint(1000000, 50000000)`, so every install holds a
+different 100 variants. A position copied from this page will almost certainly
+not exist in your database, and the beacon will correctly answer `exists: false`
+— which looks exactly like a broken beacon.
+
+So capture it into a shell variable and use that from here on:
+
+```bash
+POS=$(docker compose -f compose/docker-compose.dev.yml exec -T mongodb mongo beacon_db --quiet --eval 'print(db.variants.findOne().start)' | tr -d '\r\n')
+echo "$POS"
+```
 
 Notice the chromosome is stored as `chr1`, not `1`. Which form ends up in the
 database depends on the ingest pipeline that wrote it, which is exactly why the
@@ -307,13 +316,20 @@ query path matches both.
 ## Step 8 — Ask the beacon a real question
 
 ```bash
-curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=42497823' \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
+curl -s "http://localhost:8000/api/g_variants?assemblyId=GRCh38&referenceName=1&start=$POS" | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"])'
 ```
 
 ```text
-{'exists': True, 'numTotalResults': 1}
+{'exists': True, 'numTotalResults': 0}
 ```
+
+**`numTotalResults` really is 0 here, and that is not a contradiction.** On this
+path the counter reports matching *datasets*, not matching variants. Read
+`exists` and never infer absence from the count — see
+[api-contract.md](api-contract.md).
+
+Note the double quotes around the URL. `$POS` does not expand inside single
+quotes.
 
 **That is a working beacon.** You asked with a bare `1` and it matched data
 stored as `chr1`.
@@ -340,7 +356,7 @@ UCSC and GRC. A beacon must answer both identically:
 ```bash
 for a in GRCh38 hg38 HG38; do
   printf '%-8s ' "$a"
-  curl -s "http://localhost:8000/api/g_variants?assemblyId=$a&referenceName=1&start=42497823" \
+  curl -s "http://localhost:8000/api/g_variants?assemblyId=$a&referenceName=1&start=$POS" \
     | python3 -c 'import json,sys; print(json.load(sys.stdin)["responseSummary"]["exists"])'
 done
 ```
@@ -354,7 +370,7 @@ HG38     True
 And an assembly the beacon cannot answer for is refused rather than answered:
 
 ```bash
-curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&start=42497823'
+curl -s "http://localhost:8000/api/g_variants?assemblyId=GRCh99&referenceName=1&start=$POS"
 ```
 
 ```json
@@ -375,7 +391,7 @@ Both halves of that are now closed. `hg38` canonicalises to `GRCh38`, and a
 build this beacon holds no data for is **refused rather than answered**:
 
 ```bash
-curl -s 'http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&start=42497823'
+curl -s "http://localhost:8000/api/g_variants?assemblyId=GRCh37&referenceName=1&start=$POS"
 ```
 
 ```json
