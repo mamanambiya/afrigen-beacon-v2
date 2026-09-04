@@ -9,7 +9,7 @@ condensed version plus what you need on day two.
 
 ```bash
 git clone https://github.com/AfriGen-D/variant-checker-beacon.git
-cd variant-checker-beacon   # somewhere Docker shares; not /tmp on macOS
+cd variant-checker-beacon
 cp .env.example .env.boolean
 sed -i '' 's/^SECURE_SSL_REDIRECT=True/SECURE_SSL_REDIRECT=False/' .env.boolean
 docker compose -f compose/docker-compose.dev.yml up -d --build mongodb redis beacon-api
@@ -52,8 +52,10 @@ to a settings module routing to secure mode with `AllowAny` — so pass
 ```bash
 cd frontend
 npm ci
-npm run dev          # http://localhost:3000
+npm run dev
 ```
+
+The dev server listens on `http://localhost:3000`.
 
 The UI calls the API via relative `/api/...` paths. Locally you need either a
 proxy or an API base pointed at `http://localhost:8000`; read
@@ -63,33 +65,51 @@ than assuming.
 Gates CI enforces on the frontend:
 
 ```bash
-npm run type-check   # tsc --noEmit
-npm run lint         # eslint .
+npm run type-check
+npm run lint
 ```
+
+`type-check` runs `tsc --noEmit`; `lint` runs `eslint .`.
 
 `npm run test:ci` exists and runs Jest against **zero test files** — there are
 none in the repository. Do not read a pass from it as coverage.
 
 ## Everyday commands
 
+Tail the API logs:
+
 ```bash
-# logs
 docker compose -f compose/docker-compose.dev.yml logs -f beacon-api
+```
 
-# a shell in the API container
+Get a shell in the API container:
+
+```bash
 docker compose -f compose/docker-compose.dev.yml exec beacon-api sh
+```
 
-# mongo shell (legacy `mongo`, NOT `mongosh`, on the 5.0 image)
+Open the Mongo shell. The 5.0 image ships the legacy `mongo` client —
+`mongosh` does not exist on it:
+
+```bash
 docker compose -f compose/docker-compose.dev.yml exec mongodb mongo beacon_db
+```
 
-# clear the response cache after changing API output
+Clear the response cache after changing API output:
+
+```bash
 docker compose -f compose/docker-compose.dev.yml exec redis redis-cli FLUSHDB
+```
 
-# create the indexes the query paths need (safe to re-run)
-docker compose -f compose/docker-compose.dev.yml exec beacon-api \
-  python manage.py create_indexes --settings=beacon_project.settings_boolean
+Create the indexes the query paths need. Safe to re-run:
 
-# stop; add -v to drop the database volume too
+```bash
+docker compose -f compose/docker-compose.dev.yml exec beacon-api python manage.py create_indexes --settings=beacon_project.settings_boolean
+```
+
+Stop everything. Add `-v` to drop the database volume as well:
+
+```bash
 docker compose -f compose/docker-compose.dev.yml down
 ```
 
